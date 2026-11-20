@@ -1,0 +1,30 @@
+name: Verify hot upgrade
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  relup-guard-elixir:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: erlef/setup-beam@v1
+        with:
+          version-file: .tool-versions
+          version-type: strict
+
+      - uses: deployex/relup-guard-elixir@v1
+        env:
+          SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE || 'ci-only-secret-key-base-not-used-in-prod-0123456789' }}
+        with:
+          old-ref: ${{ github.event.pull_request.base.sha }}
+          release-name: myphoenixapp
